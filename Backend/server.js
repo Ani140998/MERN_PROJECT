@@ -1,8 +1,10 @@
 const express = require("express");
 const app = express();
+const cors = require("cors");
 const port = process.env.PORT || 5000;
 const router = require("./router/auth-router");
-const connectDB = require("./utils/db")
+const adminRoute = require("./router/admin-router");
+const connectDB = require("./database/db")
 const errorMiddleware = require("./middlewares/error-middleware")
 
 /*------------------------------------------------------------------------------------------------------
@@ -10,10 +12,28 @@ const errorMiddleware = require("./middlewares/error-middleware")
                       you can mount it at a specific URL prefix.
   ------------------------------------------------------------------------------------------------------*/
 
-app.use(express.json());
-app.use("/api/auth/", router);
-app.use(errorMiddleware);
+// ------------ Handling cors policy issues ----------- //
+const corsOptions = {
+    origin: "http://localhost:5173",
+    methods: "GET, POST, DELETE, PUT, PATCH, HEAD",
+    credentials: true
+}
 
+app.use(cors(corsOptions));
+app.use(express.json());
+
+// ------------- Let's define public route -------------------//
+app.use("/api/auth/", router);
+
+// ------------- Let's define admin route --------------------//
+app.use("/api/admin/", adminRoute);
+
+// ---- Middleware for handling all errors before connection ----//
+app.use(errorMiddleware);              
+
+
+
+// ---- DB Connection ---- //
 connectDB().then(() => {
     app.listen(port, () => {
         console.log(`Server is running on Port: ${port}`)

@@ -1,25 +1,21 @@
 
-// This is our middleware to check or validate with zodSchema that we have created using "ZOD".
+// This is our middleware to check or validate with define JOISchema that we have created using "JOI" library
+// against the form data which is entered by users. 
 const validate = (schema) => async (req, res, next) => {
-    try {
-        const parseBody = await schema.parseAsync(req.body);
-        req.body = parseBody;
-        next();
+    
+  const { error, value } =  await schema.validate(req.body, { abortEarly: false });
 
-    } catch (err) {
-        
-        const status = 400;
-        const message = "Fill the field properly";
-        const extraDetails = err.errors[0].message;
-        const error = {
-            status,
-            message,
-            extraDetails
-        }
+  if (error) {
+    const validation_error = {
+      status: 400,
+      message: "Fill the field properly",
+      extraDetails: error.details.map((err) => err.message),
+    };
+    return next(validation_error);
+  }
 
-        next(error);
-        // res.status(400).json("Validation Error",error);
-    }
+  req.body = value; // sanitized and validated data
+  next();
 };
 
 module.exports = validate;
